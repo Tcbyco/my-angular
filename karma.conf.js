@@ -6,7 +6,7 @@ module.exports = function (config) {
       "test/**/*.js": ["jshint", "browserify"],
       "src/**/*.js": ["jshint", "browserify"],
     },
-    browsers: ["PhantomJS"],
+    browsers: ["PhantomJS", "Firefox"],
     browserify: {
       debug: true,
       bundleDelay: 2000,
