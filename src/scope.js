@@ -3,7 +3,6 @@
 function Scope() {
   // $$ = consider this private to angular.
   this.$$watchers = [];
-  this.test = "test";
 }
 
 Scope.prototype.$watch = function (watchFn, listenerFn) {
