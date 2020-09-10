@@ -18,10 +18,6 @@ module.exports = function (config) {
       "parcel/*": ["parcel"],
     },
     browsers: ["Firefox", "Chrome"],
-    browserify: {
-      debug: true,
-      bundleDelay: 2000,
-    },
     parcelConfig: {
       cacheDir: "./.cache", // default: "./.cache"
       detailedReport: false, // default: false,
