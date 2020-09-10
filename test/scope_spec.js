@@ -1,5 +1,6 @@
 "use strict";
-var Scope = require("../src/scope");
+import Scope from "../src/scope";
+// var Scope = require("../src/scope");
 describe("Scope", function () {
   it("can be constructed and used as an object", function () {
     var scope = new Scope();

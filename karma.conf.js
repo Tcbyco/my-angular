@@ -1,15 +1,31 @@
 module.exports = function (config) {
   config.set({
-    frameworks: ["browserify", "jasmine"],
-    files: ["src/**/*.js", "test/**/*_spec.js"],
+    frameworks: ["parcel", "jasmine"],
+    files: [
+      "src/**/*.js",
+      "test/**/*_spec.js",
+      {
+        // parcel tests should not be watched. Parcel will do the
+        // watching instead
+        pattern: "parcel/**/*.js",
+        watched: false,
+        included: false,
+      },
+    ],
     preprocessors: {
-      "test/**/*.js": ["jshint", "browserify"],
-      "src/**/*.js": ["jshint", "browserify"],
+      "test/**/*.js": ["jshint", "parcel"],
+      "src/**/*.js": ["jshint", "parcel"],
+      "parcel/*": ["parcel"],
     },
-    browsers: ["PhantomJS", "Firefox"],
+    browsers: ["Firefox", "Chrome"],
     browserify: {
       debug: true,
       bundleDelay: 2000,
+    },
+    parcelConfig: {
+      cacheDir: "./.cache", // default: "./.cache"
+      detailedReport: false, // default: false,
+      logLevel: 2, // default: 1
     },
   });
 };

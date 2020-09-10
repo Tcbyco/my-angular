@@ -1,6 +1,7 @@
 #Node Modules#
 node_modules/
-
+.cache
+.karma-parcel
 # Compiled source #
 ###################
 *.com
