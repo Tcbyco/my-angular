@@ -20,4 +20,8 @@ Scope.prototype.$digest = function () {
   });
 };
 
-module.exports = Scope;
+// I'm not sure whether I can use ES Modules - there may be node based
+// implementation details later on that will necessitate require().
+// For the time being, using ESM.
+export default Scope;
+// module.exports = Scope;

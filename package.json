@@ -2,19 +2,16 @@
   "name": "my-own-angularjs",
   "version": "0.1.0",
   "devDependencies": {
-    "browserify": "^16.5.2",
     "jasmine-core": "^3.6.0",
     "jshint": "^2.12.0",
     "karma": "^5.2.2",
-    "karma-browserify": "^7.0.0",
     "karma-chrome-launcher": "^3.1.0",
     "karma-firefox-launcher": "^1.3.0",
     "karma-jasmine": "^4.0.1",
     "karma-jshint-preprocessor": "0.0.6",
-    "karma-phantomjs-launcher": "^1.0.4",
-    "phantomjs-prebuilt": "^2.1.16",
-    "sinon": "^9.0.3",
-    "watchify": "^3.11.1"
+    "karma-parcel": "^0.5.2",
+    "parcel-bundler": "^1.12.4",
+    "sinon": "^9.0.3"
   },
   "scripts": {
     "lint": "jshint src test",
