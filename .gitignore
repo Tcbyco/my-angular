@@ -1,9 +1,14 @@
 #Node Modules#
+##############
 node_modules/
+
+#Dev Env#
+#########
 .cache
 .karma-parcel
 .vscode
 .prettierrc
+
 # Compiled source #
 ###################
 *.com
