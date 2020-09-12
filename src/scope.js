@@ -11,7 +11,10 @@ function Scope() {
 // first digest when watch value is undefined"
 function initWatchVal() {}
 
-Scope.prototype.$watch = function (watchFn, listenerFn) {
+// listenerFn defaults to empty no-op to allow watchers that notify us
+// when the scope is digested. See scope_spec test: "may have watchers 
+// that omit the listener function" 
+Scope.prototype.$watch = function (watchFn, listenerFn = function () {}) {
   var watcher = {
     watchFn: watchFn,
     listenerFn: listenerFn,

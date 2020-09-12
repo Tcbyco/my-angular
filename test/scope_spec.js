@@ -81,5 +81,15 @@ describe("Scope", function () {
       scope.$digest();
       expect(oldValueGiven).toBe(123);
     });
+    // Registering a watcher without a listener lets us set up a
+    // watcher that notifies us whenever an angular scope is digested.
+    // Usage note: remember to ensure that the watch function does not
+    // return anything.
+    it("may have watchers that omit the listener function", function () {
+      var watchFn = jasmine.createSpy().and.returnValue("something");
+      scope.$watch(watchFn); // omitting listener
+      scope.$digest();
+      expect(watchFn).toHaveBeenCalled();
+    });
   });
 });
