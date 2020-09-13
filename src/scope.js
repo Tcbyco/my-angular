@@ -42,6 +42,8 @@ Scope.prototype.$$digestOnce = function () {
   });
   return dirty;
 };
+// rerun digest() until all watched vals remain clean
+// this is in case listener functions update watched vals.
 Scope.prototype.$digest = function () {
   var dirty;
   do {
