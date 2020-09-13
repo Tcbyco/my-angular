@@ -12,8 +12,8 @@ function Scope() {
 function initWatchVal() {}
 
 // listenerFn defaults to empty no-op to allow watchers that notify us
-// when the scope is digested. See scope_spec test: "may have watchers 
-// that omit the listener function" 
+// when the scope is digested. See scope_spec test: "may have watchers
+// that omit the listener function"
 Scope.prototype.$watch = function (watchFn, listenerFn = function () {}) {
   var watcher = {
     watchFn: watchFn,
@@ -25,8 +25,8 @@ Scope.prototype.$watch = function (watchFn, listenerFn = function () {}) {
 };
 
 // arrow function used so 'this' will refer to the instance instead of window
-Scope.prototype.$digest = function () {
-  var newValue, oldValue;
+Scope.prototype.$$digestOnce = function () {
+  var newValue, oldValue, dirty;
   this.$$watchers.forEach((watcher) => {
     newValue = watcher.watchFn(this);
     oldValue = watcher.last;
@@ -37,8 +37,16 @@ Scope.prototype.$digest = function () {
         oldValue === initWatchVal ? newValue : oldValue,
         this
       );
+      dirty = true;
     }
   });
+  return dirty;
+};
+Scope.prototype.$digest = function () {
+  var dirty;
+  do {
+    dirty = this.$$digestOnce();
+  } while (dirty);
 };
 
 // I'm not sure whether I can use ES Modules - there may be node based
