@@ -45,9 +45,14 @@ Scope.prototype.$$digestOnce = function () {
 // rerun digest() until all watched vals remain clean
 // this is in case listener functions update watched vals.
 Scope.prototype.$digest = function () {
+  var ttl = 10; // Time To Live
   var dirty;
   do {
     dirty = this.$$digestOnce();
+    if (dirty && !ttl--) {
+      console.log("10 digest iterations reached without stabilising");
+      throw "10 digest iterations reached without stabilising";
+    }
   } while (dirty);
 };
 

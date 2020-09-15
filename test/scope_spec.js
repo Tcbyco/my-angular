@@ -119,5 +119,28 @@ describe("Scope", function () {
       scope.$digest();
       expect(scope.initial).toBe("B.");
     });
+    it("gives up on watchers after 10 iterations", function () {
+      scope.counterA = 0;
+      scope.counterB = 0;
+      scope.$watch(
+        function (scope) {
+          return scope.counterB;
+        },
+        function (newValue, oldValue, scope) {
+          scope.counterA++;
+        }
+      );
+      scope.$watch(
+        function (scope) {
+          return scope.counterA;
+        },
+        function (scope) {
+          scope.counterB++;
+        }
+      );
+      expect(function () {
+        scope.$digest();
+      }).toThrow();
+    });
   });
 });
