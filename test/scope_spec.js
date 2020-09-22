@@ -134,7 +134,7 @@ describe("Scope", function () {
         function (scope) {
           return scope.counterA;
         },
-        function (scope) {
+        function (newValue, oldValue, scope) {
           scope.counterB++;
         }
       );

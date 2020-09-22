@@ -50,7 +50,6 @@ Scope.prototype.$digest = function () {
   do {
     dirty = this.$$digestOnce();
     if (dirty && !ttl--) {
-      console.log("10 digest iterations reached without stabilising");
       throw "10 digest iterations reached without stabilising";
     }
   } while (dirty);
