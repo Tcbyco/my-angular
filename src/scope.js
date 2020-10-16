@@ -28,11 +28,13 @@ Scope.prototype.$watch = function (watchFn, listenerFn = function () {}) {
 // arrow function used so 'this' will refer to the instance instead of window
 Scope.prototype.$$digestOnce = function () {
   var newValue, oldValue, dirty;
-  // switch to array.every() to allow short circuiting on false cb val
-  this.$$watchers.every((watcher) => {
+  // Call each watch function. 
+  this.$$watchers.every((watcher) => { // .every() used to allow early abort optimization.
     newValue = watcher.watchFn(this);
     oldValue = watcher.last;
-    if (newValue !== oldValue) {
+    // if the watch fn return value is different to last time (dirty), run the listener function.
+    if (newValue !== oldValue) { 
+      // Keep track of the most recent dirty watcher. See else if below.
       this.$$lastDirtyWatch = watcher;
       watcher.last = newValue;
       watcher.listenerFn(
@@ -41,8 +43,10 @@ Scope.prototype.$$digestOnce = function () {
         this
       );
       dirty = true;
-    // short circuit if the last dirty watch is now clean.
-    // this is an opimization to skip unecessary digestion.
+
+    // This is an opimization to skip unecessary digestion.
+    // If a watcher is clean AND the most recent dirty watcher,
+    // there cannot be any other dirty watchers. We can abort.
     } else if (this.$$lastDirtyWatch === watcher) {
       return false;
     }

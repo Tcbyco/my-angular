@@ -145,7 +145,8 @@ describe("Scope", function () {
         scope.$digest();
       }).toThrow();
     });
-    it("ends the digest when the last watch is clean", function () {
+    // 
+    it("skips unnecessary digests and ends early when the last dirty watch is clean", function () {
       scope.array = _.range(100);
       var watchExecutions = 0;
       _.times(100, function (i) {
