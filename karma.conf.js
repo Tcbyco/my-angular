@@ -17,7 +17,7 @@ module.exports = function (config) {
       "src/**/*.js": ["jshint", "parcel"],
       "parcel/*": ["parcel"],
     },
-    browsers: ["Firefox", "Chrome"],
+    browsers: ["Firefox"],
     parcelConfig: {
       cacheDir: "./.cache", // default: "./.cache"
       detailedReport: false, // default: false,

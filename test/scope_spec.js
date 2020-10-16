@@ -1,6 +1,8 @@
 "use strict";
 
 import Scope from "../src/scope";
+import _ from "lodash";
+
 // var Scope = require("../src/scope");
 describe("Scope", function () {
   it("can be constructed and used as an object", function () {

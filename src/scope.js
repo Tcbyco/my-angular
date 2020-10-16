@@ -3,6 +3,7 @@
 function Scope() {
   // $$ = consider this private to angular.
   this.$$watchers = [];
+  this.$$lastDirtyWatch = null;
 }
 
 // This fn definition serves as a unique initial value for a watched value.
@@ -27,10 +28,12 @@ Scope.prototype.$watch = function (watchFn, listenerFn = function () {}) {
 // arrow function used so 'this' will refer to the instance instead of window
 Scope.prototype.$$digestOnce = function () {
   var newValue, oldValue, dirty;
-  this.$$watchers.forEach((watcher) => {
+  // switch to array.every() to allow short circuiting on false cb val
+  this.$$watchers.every((watcher) => {
     newValue = watcher.watchFn(this);
     oldValue = watcher.last;
     if (newValue !== oldValue) {
+      this.$$lastDirtyWatch = watcher;
       watcher.last = newValue;
       watcher.listenerFn(
         newValue,
@@ -38,15 +41,22 @@ Scope.prototype.$$digestOnce = function () {
         this
       );
       dirty = true;
+    // short circuit if the last dirty watch is now clean.
+    // this is an opimization to skip unecessary digestion.
+    } else if (this.$$lastDirtyWatch === watcher) {
+      return false;
     }
+    // .every() requires cb to return a truthy value to continue iterating
+    return true; 
   });
   return dirty;
 };
 // rerun digest() until all watched vals remain clean
 // this is in case listener functions update watched vals.
 Scope.prototype.$digest = function () {
-  var ttl = 10; // Time To Live
+  var ttl = 10; // Time To Live - the max iterations before giving up.
   var dirty;
+  this.$$lastDirtyWatch = null;
   do {
     dirty = this.$$digestOnce();
     if (dirty && !ttl--) {
