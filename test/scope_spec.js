@@ -145,8 +145,9 @@ describe("Scope", function () {
         scope.$digest();
       }).toThrow();
     });
-    // 
-    it("skips unnecessary digests and ends early when the last dirty watch is clean", function () {
+    // logically, if the most recent dirty watch is now clean, there must not be any
+    // other dirty watchers left. We should skip the rest.
+    it("skips unnecessary digests and ends early when the last dirty watch is now clean", function () {
       scope.array = _.range(100);
       var watchExecutions = 0;
       _.times(100, function (i) {
@@ -164,6 +165,24 @@ describe("Scope", function () {
       scope.array[0] = 420;
       scope.$digest();
       expect(watchExecutions).toBe(301);
+    });
+    it('does not end digest before watchers added mid-digest are run', function() {
+      scope.aValue = 'abc';
+      scope.counter = 0;
+
+      scope.$watch(
+        function(scope){return scope.aValue;},
+        function(newValue, oldValue, scope) {
+          scope.$watch(
+            function(scope){return scope.aValue;},
+            function(newValue, oldValue, scope) {
+              scope.counter++;
+            }
+          );
+        }
+      );
+      scope.$digest();
+      expect(scope.counter).toBe(1);
     });
   });
 });

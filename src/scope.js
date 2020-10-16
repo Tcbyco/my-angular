@@ -23,6 +23,7 @@ Scope.prototype.$watch = function (watchFn, listenerFn = function () {}) {
   };
 
   this.$$watchers.push(watcher);
+  this.$$lastDirtyWatch = null;
 };
 
 // arrow function used so 'this' will refer to the instance instead of window
@@ -44,7 +45,7 @@ Scope.prototype.$$digestOnce = function () {
       );
       dirty = true;
 
-    // This is an opimization to skip unecessary digestion.
+    // This is an optimization to skip unecessary digestion.
     // If a watcher is clean AND the most recent dirty watcher,
     // there cannot be any other dirty watchers. We can abort.
     } else if (this.$$lastDirtyWatch === watcher) {
