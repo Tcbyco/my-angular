@@ -1,10 +1,22 @@
 "use strict";
 
+import _ from 'lodash';
+
 function Scope() {
   // $$ = consider this private to angular.
   this.$$watchers = [];
   this.$$lastDirtyWatch = null;
 }
+
+// utility function to allow us to select value based checking,
+// rather than the reference based default.
+Scope.prototype.$$areEqual = function(newValue, oldValue, valueEq){
+  if (valueEq) {
+    return _.isEqual(newValue, oldValue);
+  } else {
+    return newValue === oldValue;
+  }
+};
 
 // This fn definition serves as a unique initial value for a watched value.
 // It is intentionally blank, as the function is never run.
@@ -15,11 +27,12 @@ function initWatchVal() {}
 // listenerFn defaults to empty no-op to allow watchers that notify us
 // when the scope is digested. See scope_spec test: "may have watchers
 // that omit the listener function"
-Scope.prototype.$watch = function (watchFn, listenerFn = function () {}) {
+Scope.prototype.$watch = function (watchFn, listenerFn = function () {}, valueEq = false) {
   var watcher = {
     watchFn: watchFn,
     listenerFn: listenerFn,
-    last: initWatchVal,
+    valueEq: valueEq,
+    last: initWatchVal
   };
 
   this.$$watchers.push(watcher);
@@ -34,10 +47,10 @@ Scope.prototype.$$digestOnce = function () {
     newValue = watcher.watchFn(this);
     oldValue = watcher.last;
     // if the watch fn return value is different to last time (dirty), run the listener function.
-    if (newValue !== oldValue) { 
+    if (!this.$$areEqual(newValue, oldValue, watcher.valueEq)) { 
       // Keep track of the most recent dirty watcher. See else if below.
       this.$$lastDirtyWatch = watcher;
-      watcher.last = newValue;
+      watcher.last = (watcher.valueEq ? _.cloneDeep(newValue) : newValue)
       watcher.listenerFn(
         newValue,
         oldValue === initWatchVal ? newValue : oldValue,
