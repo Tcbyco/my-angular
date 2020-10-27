@@ -166,16 +166,20 @@ describe("Scope", function () {
       scope.$digest();
       expect(watchExecutions).toBe(301);
     });
-    it('does not end digest before watchers added mid-digest are run', function() {
-      scope.aValue = 'abc';
+    it("does not end digest before watchers added mid-digest are run", function () {
+      scope.aValue = "abc";
       scope.counter = 0;
 
       scope.$watch(
-        function(scope){return scope.aValue;},
-        function(newValue, oldValue, scope) {
+        function (scope) {
+          return scope.aValue;
+        },
+        function (newValue, oldValue, scope) {
           scope.$watch(
-            function(scope){return scope.aValue;},
-            function(newValue, oldValue, scope) {
+            function (scope) {
+              return scope.aValue;
+            },
+            function (newValue, oldValue, scope) {
               scope.counter++;
             }
           );
@@ -184,15 +188,15 @@ describe("Scope", function () {
       scope.$digest();
       expect(scope.counter).toBe(1);
     });
-    it('compares based on value if enabled', function(){
-      scope.aValue = [1,2,3];
+    it("compares based on value if enabled", function () {
+      scope.aValue = [1, 2, 3];
       scope.counter = 0;
 
       scope.$watch(
-        function(scope) {
+        function (scope) {
           return scope.aValue;
         },
-        function(newValue, oldValue, scope) {
+        function (newValue, oldValue, scope) {
           scope.counter++;
         },
         true
@@ -203,7 +207,6 @@ describe("Scope", function () {
       scope.aValue.push(4);
       scope.$digest();
       expect(scope.counter).toBe(2);
-
-    })
+    });
   });
 });
