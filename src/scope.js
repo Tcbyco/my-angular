@@ -64,32 +64,41 @@ Scope.prototype.$watch = function (
 // instead of window
 Scope.prototype.$$digestOnce = function () {
   var newValue, oldValue, dirty;
-  // Call each watch function.
+  // Iterate over each watcher, calling its watchFn and running the
+  // listenerFn if the watchFn return val is different to the last
+  // time it was called.
+  // .every() used to allow early abort optimization.
   this.$$watchers.every((watcher) => {
-    // .every() used to allow early abort optimization.
-    newValue = watcher.watchFn(this);
-    oldValue = watcher.last;
-    // if the watch fn return value is different to last time
-    // (ie the watcher is dirty), run the listener function.
-    if (!this.$$areEqual(newValue, oldValue, watcher.valueBasedEquality)) {
-      this.$$lastDirtyWatch = watcher;
-      if (watcher.valueBasedEquality) {
-        watcher.last = _.cloneDeep(newValue);
-      } else {
-        watcher.last = newValue;
-      }
-      watcher.listenerFn(
-        newValue,
-        oldValue === initWatchVal ? newValue : oldValue,
-        this
-      );
-      dirty = true;
+    try {
+      newValue = watcher.watchFn(this);
+      oldValue = watcher.last;
+      // if the watch fn return value is different to last time
+      // (ie the watcher is dirty), run the listener function.
+      if (!this.$$areEqual(newValue, oldValue, watcher.valueBasedEquality)) {
+        this.$$lastDirtyWatch = watcher;
+        if (watcher.valueBasedEquality) {
+          watcher.last = _.cloneDeep(newValue);
+        } else {
+          watcher.last = newValue;
+        }
+        watcher.listenerFn(
+          newValue,
+          oldValue === initWatchVal ? newValue : oldValue,
+          this
+        );
+        dirty = true;
 
-      // This is an optimization to skip unecessary digestion.
-      // If a watcher is clean AND the most recent dirty watcher,
-      // there cannot be any other dirty watchers. We can abort.
-    } else if (this.$$lastDirtyWatch === watcher) {
-      return false;
+        // This is an optimization to skip unecessary digestion.
+        // If a watcher is clean AND the most recent dirty watcher,
+        // there cannot be any other dirty watchers. We can abort.
+      } else if (this.$$lastDirtyWatch === watcher) {
+        return false;
+      }
+    } catch (e) {
+      console.error(
+        `Error during scope watcher digest.
+        error: ${e}`
+      );
     }
     // .every() requires cb to return a truthy value to continue
     // iterating
