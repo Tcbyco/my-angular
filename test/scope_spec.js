@@ -66,7 +66,7 @@ describe("Scope", function () {
         }
       );
       scope.$digest();
-      // still runs listener
+      // expect digest to still call listener
       expect(scope.counter).toBe(1);
     });
     it("calls listener with new value instead of old/initial value, the first time only", function () {
@@ -164,16 +164,19 @@ describe("Scope", function () {
 
       scope.array[0] = 420;
       scope.$digest();
+      // expect digest to short circuit once we have cleaned the last
+      // dirty value.
       expect(watchExecutions).toBe(301);
     });
     it("does not end digest before watchers added mid-digest are run", function () {
       scope.aValue = "abc";
-      scope.counter = 0;
+      scope.counter = 0; // incremented when the inner watch is digested.
 
       scope.$watch(
         function (scope) {
           return scope.aValue;
         },
+        // The listenerFn adds another watch to the same value.
         function (newValue, oldValue, scope) {
           scope.$watch(
             function (scope) {
@@ -199,13 +202,15 @@ describe("Scope", function () {
         function (newValue, oldValue, scope) {
           scope.counter++;
         },
-        true
+        true // use value-based dirty checking
       );
 
       scope.$digest();
       expect(scope.counter).toBe(1);
+      // Mutate the watched array.
       scope.aValue.push(4);
       scope.$digest();
+      // Check that the change was noticed.
       expect(scope.counter).toBe(2);
     });
   });
