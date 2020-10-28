@@ -207,11 +207,33 @@ describe("Scope", function () {
 
       scope.$digest();
       expect(scope.counter).toBe(1);
+
       // Mutate the watched array.
       scope.aValue.push(4);
       scope.$digest();
       // Check that the change was noticed.
       expect(scope.counter).toBe(2);
+    });
+    // NaN != NaN, so we must ensure watched NaN's do not
+    // remain dirty forever.
+    it("correctly identifies if a NaN is clean, when using reference-based equality", function () {
+      scope.number = 0 / 0; //NaN
+      scope.counter = 0;
+
+      scope.$watch(
+        function (scope) {
+          return scope.number;
+        },
+        function (newValue, oldValue, scope) {
+          scope.counter++;
+        }
+      );
+
+      scope.$digest();
+      expect(scope.counter).toBe(1);
+
+      scope.$digest();
+      expect(scope.counter).toBe(1);
     });
   });
 });

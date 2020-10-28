@@ -14,7 +14,13 @@ Scope.prototype.$$areEqual = function (newValue, oldValue, valueBasedEquality) {
   if (valueBasedEquality) {
     return _.isEqual(newValue, oldValue);
   } else {
-    return newValue === oldValue;
+    return (
+      newValue === oldValue ||
+      (Number.isNaN(newValue) && Number.isNaN(oldValue))
+    );
+    // For reasoning behind Number.isNan() instead of isNan(),
+    // see 'confusing special case behavior' at:
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/isNaN#Description
   }
 };
 
