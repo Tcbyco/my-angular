@@ -58,16 +58,24 @@ Scope.prototype.$watch = function (
 
   this.$$watchers.push(watcher);
   this.$$lastDirtyWatch = null;
+
+  return () => {
+    var index = this.$$watchers.indexOf(watcher);
+    if (index >= 0) {
+      this.$$watchers.splice(index, 1);
+    }
+  };
 };
 
 // arrow function used so 'this' will refer to the instance
 // instead of window
 Scope.prototype.$$digestOnce = function () {
-  var newValue, oldValue, dirty;
   // Iterate over each watcher, calling its watchFn and running the
   // listenerFn if the watchFn return val is different to the last
   // time it was called.
   // .every() used to allow early abort optimization.
+  var newValue, oldValue, dirty;
+
   this.$$watchers.every((watcher) => {
     try {
       newValue = watcher.watchFn(this);
@@ -83,6 +91,8 @@ Scope.prototype.$$digestOnce = function () {
         }
         watcher.listenerFn(
           newValue,
+          // The first time the listenerFn runs there is no
+          // old value, so it receives the newValue twice.
           oldValue === initWatchVal ? newValue : oldValue,
           this
         );
