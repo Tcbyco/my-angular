@@ -308,6 +308,33 @@ describe("Scope", function () {
       scope.$digest();
       expect(scope.counter).toBe(2);
     });
-    // todo: allow removing a watch during digest
+    it('allows destroying a $watch during digest', function(){
+      scope.aValue = 'abc';
+      var watchCalls = [];
+
+      scope.$watch(
+        function(scope) {
+          watchCalls.push('first');
+          return scope.aValue;
+        }
+      );
+
+      var destroyWatch = scope.$watch(
+        function(scope) {
+          watchCalls.push('second');
+          destroyWatch(); // returned during assignment. Definitely check this one in debugger.
+        }
+      );
+      
+      scope.$watch(
+        function(scope) {
+          watchCalls.push('third');
+          return scope.aValue;
+        }
+      );
+
+      scope.$digest();
+      expect(watchCalls).toEqual(['first', 'second', 'third', 'first', 'third']);
+    });
   });
 });
