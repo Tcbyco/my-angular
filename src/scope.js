@@ -3,7 +3,6 @@
 import _ from "lodash";
 
 function Scope() {
-  // $$ === consider this private to angular.
   this.$$watchers = [];
   this.$$lastDirtyWatch = null;
 }
@@ -24,32 +23,40 @@ Scope.prototype.$$areEqual = function (newValue, oldValue, valueBasedEquality) {
   }
 };
 
-/* This fn definition serves as a unique initial value for
- the watched value. It is intentionally blank. The
- function is never called. This ensures that the listener
- fn will run on the first digest even if the watch fn returns
- undefined, because undefined != initWatchVal. 
- 
- Further explanation: Since we compare the watch fn return 
- value to its previous return val in order
- to determine whether to run the listener fn, BUT we want the listener 
- fn to always run the first time, the initial watch
- value must be set a unique value that will always be different 
- to whatever the watch fn can return. A function definition will
- always be a unique reference.  
- See scope_spec: "still calls listener on first digest 
- when watch value is undefined" */
+/* initWatchVal serves as a unique initial return value for
+ the watchFn inside $watch. The function is never called. It ensures 
+ that the listenerFn will run on the first digest regardless
+ of the watchFn return value. See scope_spec: "still calls 
+ listener on first digest when watch value is undefined" */
 function initWatchVal() {}
 
-// listenerFn defaults to empty no-op to allow watchers
-// that notify us when the scope is digested. See scope_spec:
-// "may have watchers that omit the listener function"
+/* Scope.prototype.$watch(watchFn[, listenerFn, [valueBasedEquality]])
+Adds a watcher object to the Scope.$$watchers array.
+Returns a destroyWatcher function, which can be called to 
+remove the watcher from the array.
+
+Parameters
+watchFn(scope){} 
+Function to be called during each $digest().
+Used to monitor some value in scope. Returns 
+the value in scope to be watched. 
+
+[optional] listenerFn(newValue, oldValue, scope){} 
+Function to run during the first digest, and then 
+only if the latest value returned by watchFn is different 
+to the previous time watchFn was run. 
+
+[optional] valueBasedEquality: a boolean. If true, watchFn 
+return values will be compared using value based equality, 
+rather than the default reference based (===) equality. 
+Used for tracking changes within objects.
+ */
 Scope.prototype.$watch = function (
   watchFn,
   listenerFn = function () {},
   valueBasedEquality = false
 ) {
-  var watcher = {
+  let watcher = {
     watchFn: watchFn,
     listenerFn: listenerFn,
     valueBasedEquality: valueBasedEquality,
@@ -59,23 +66,29 @@ Scope.prototype.$watch = function (
   this.$$watchers.push(watcher);
   this.$$lastDirtyWatch = null;
 
-  return () => {
-    var index = this.$$watchers.indexOf(watcher);
+  const destroyWatcher = () => {
+    const index = this.$$watchers.indexOf(watcher);
     if (index >= 0) {
       this.$$watchers.splice(index, 1);
     }
   };
+  return destroyWatcher;
 };
 
-// arrow function used so 'this' will refer to the instance
-// instead of window
-Scope.prototype.$$digestOnce = function () {
-  // Iterate over each watcher, calling its watchFn and running the
-  // listenerFn if the watchFn return val is different to the last
-  // time it was called.
-  // .every() used to allow early abort optimization.
-  var newValue, oldValue, dirty;
+/* Scope.prototype.$$digestOnce()
+Returns a boolean. True if the scope is dirty,
+false otherwise.
 
+Iterates over each watcher {} and calls its watchFn. 
+If a watchFn return val is different to the last 
+time it was called, run the watcher's listenerFn.
+
+$$digestOnce is called in a loop inside $digest.
+*/
+Scope.prototype.$$digestOnce = function () {
+  let newValue, oldValue, dirty;
+
+  // .every() used instead of forEach to allow early abort optimization.
   this.$$watchers.every((watcher) => {
     try {
       newValue = watcher.watchFn(this);
@@ -89,49 +102,50 @@ Scope.prototype.$$digestOnce = function () {
         } else {
           watcher.last = newValue;
         }
+        // The first time the listenerFn runs there is no
+        // old value, so it receives newValue twice.
         watcher.listenerFn(
           newValue,
-          // The first time the listenerFn runs there is no
-          // old value, so it receives the newValue twice.
           oldValue === initWatchVal ? newValue : oldValue,
           this
         );
         dirty = true;
 
-        // This is an optimization to skip unecessary digestion.
-        // If a watcher is clean AND the most recent dirty watcher,
-        // there cannot be any other dirty watchers. We can abort.
+        /* 
+        Optimization to skip unecessary digestion.
+        If a watcher is clean AND the most recent dirty watcher,
+        there cannot be any other dirty watchers. Abort early. */
       } else if (this.$$lastDirtyWatch === watcher) {
         return false;
       }
     } catch (e) {
       console.error(
-        `Error during scope watcher digest.
+        `Error during scope digest.
         error: ${e}`
       );
     }
-    // .every() requires cb to return a truthy value to continue
-    // iterating
+
+    // continue iterating over the watchers
     return true;
   });
+  // $digest will loop this function until dirty returns false,
+  // or we loop 10 times without the watch successfully clearing.
   return dirty;
 };
-// rerun digest() until all watched vals remain clean
-// this is in case listener functions update watched vals.
+
+/* Scope.prototype.digest() 
+ Loop digestOnce() until all dirty values are clean.
+*/
 Scope.prototype.$digest = function () {
-  var ttl = 10; // Time To Live - the max iterations before giving up.
-  var dirty;
+  let ttl = 10; // Time To Live - the max iterations before giving up.
+  let dirty;
   this.$$lastDirtyWatch = null;
   do {
     dirty = this.$$digestOnce();
-    if (dirty && !ttl--) {
+    if (dirty && !--ttl) {
       throw "10 digest iterations reached without stabilising";
     }
   } while (dirty);
 };
 
-// I'm not sure whether I can use ES Modules - there may be node based
-// implementation details later on that will necessitate require().
-// For the time being, using ESM.
 export default Scope;
-// module.exports = Scope;
