@@ -63,7 +63,7 @@ Scope.prototype.$watch = function (
     last: initWatchVal,
   };
 
-  this.$$watchers.push(watcher);
+  this.$$watchers.unshift(watcher);
   this.$$lastDirtyWatch = null;
 
   const destroyWatcher = () => {
@@ -88,8 +88,8 @@ $$digestOnce is called in a loop inside $digest.
 Scope.prototype.$$digestOnce = function () {
   let newValue, oldValue, dirty;
 
-  // .every() used instead of forEach to allow early abort optimization.
-  this.$$watchers.every((watcher) => {
+  // .every used instead of .forEach so we can abort mid-iteration.
+  _.forEachRight(this.$$watchers, (watcher) => {
     try {
       newValue = watcher.watchFn(this);
       oldValue = watcher.last;
@@ -113,11 +113,12 @@ Scope.prototype.$$digestOnce = function () {
 
         /* 
         Optimization to skip unecessary digestion.
-        If a watcher is clean AND the most recent dirty watcher,
+        If a watcher is clean AND is the most recent dirty watcher,
         there cannot be any other dirty watchers. Abort early. */
       } else if (this.$$lastDirtyWatch === watcher) {
         return false;
       }
+      // todo: improve error logging
     } catch (e) {
       console.error(
         `Error during scope digest.
@@ -128,6 +129,48 @@ Scope.prototype.$$digestOnce = function () {
     // continue iterating over the watchers
     return true;
   });
+
+  // this.$$watchers.every((watcher) => {
+  //   try {
+  //     newValue = watcher.watchFn(this);
+  //     oldValue = watcher.last;
+  //     // if the watch fn return value is different to last time
+  //     // (ie the watcher is dirty), run the listener function.
+  //     if (!this.$$areEqual(newValue, oldValue, watcher.valueBasedEquality)) {
+  //       this.$$lastDirtyWatch = watcher;
+  //       if (watcher.valueBasedEquality) {
+  //         watcher.last = _.cloneDeep(newValue);
+  //       } else {
+  //         watcher.last = newValue;
+  //       }
+  //       // The first time the listenerFn runs there is no
+  //       // old value, so it receives newValue twice.
+  //       watcher.listenerFn(
+  //         newValue,
+  //         oldValue === initWatchVal ? newValue : oldValue,
+  //         this
+  //       );
+  //       dirty = true;
+
+  //       /*
+  //       Optimization to skip unecessary digestion.
+  //       If a watcher is clean AND the most recent dirty watcher,
+  //       there cannot be any other dirty watchers. Abort early. */
+  //     } else if (this.$$lastDirtyWatch === watcher) {
+  //       return false;
+  //     }
+  //     // todo: improve error logging
+  //   } catch (e) {
+  //     console.error(
+  //       `Error during scope digest.
+  //       error: ${e}`
+  //     );
+  //   }
+
+  //   // continue iterating over the watchers
+  //   return true;
+  // });
+
   // $digest will loop this function until dirty returns false,
   // or we loop 10 times without the watch successfully clearing.
   return dirty;
