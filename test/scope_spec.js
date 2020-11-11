@@ -4,7 +4,6 @@
 import Scope from "../src/scope";
 import _ from "lodash";
 
-
 describe("Scope", () => {
   it("can be constructed and used as an object", () => {
     let scope = new Scope();
@@ -268,7 +267,7 @@ describe("Scope", () => {
           return scope.aValue;
         },
         (newValue, oldValue, scope) => {
-          throw new Error('This error should not break digest');
+          throw new Error("This error should not break digest");
         }
       );
       scope.$watch(
@@ -310,33 +309,59 @@ describe("Scope", () => {
       scope.$digest();
       expect(scope.counter).toBe(2);
     });
-    it('allows destroying a $watch during digest', () => {
-      scope.aValue = 'abc';
+    it("allows destroying a $watch during digest", () => {
+      scope.aValue = "abc";
       let watchCalls = [];
 
+      scope.$watch((scope) => {
+        watchCalls.push("first");
+        return scope.aValue;
+      });
+
+      const destroyWatch = scope.$watch((scope) => {
+        watchCalls.push("second");
+        destroyWatch(); // returned during assignment. Definitely check this one in debugger.
+      });
+
+      scope.$watch((scope) => {
+        watchCalls.push("third");
+        return scope.aValue;
+      });
+
+      scope.$digest();
+      expect(watchCalls).toEqual([
+        "first",
+        "second",
+        "third",
+        "first",
+        "third",
+      ]);
+    });
+    it("allows a watch to destroy another watch during digest", () => {
+      scope.aValue = "abc";
+      scope.counter = 0;
+
       scope.$watch(
-        function(scope) {
-          watchCalls.push('first');
-          return scope.aValue;
+        (scope) => scope.aValue,
+        (newValue, oldValue, scope) => {
+          destroyWatch();
         }
       );
 
       const destroyWatch = scope.$watch(
-        function(scope) {
-          watchCalls.push('second');
-          destroyWatch(); // returned during assignment. Definitely check this one in debugger.
-        }
+        (scope) => {},
+        (newValue, oldValue, scope) => {}
       );
-      
+
       scope.$watch(
-        function(scope) {
-          watchCalls.push('third');
-          return scope.aValue;
+        (scope) => scope.aValue,
+        (newValue, oldValue, scope) => {
+          scope.counter++;
         }
       );
 
       scope.$digest();
-      expect(watchCalls).toEqual(['first', 'second', 'third', 'first', 'third']);
+      expect(scope.counter).toBe(1);
     });
   });
 });

@@ -7,8 +7,7 @@ export default class Scope {
     this.$$watchers = [];
     this.$$lastDirtyWatch = null;
   }
-  // Equality checker. Has option to enable value-based checking.
-  // Defaults to reference-based (===) equality.
+  // Equality checker, with option to enable value-based checking.
   static areEqual(newValue, oldValue, valueBasedEquality) {
     if (valueBasedEquality) {
       return _.isEqual(newValue, oldValue);
@@ -23,7 +22,7 @@ export default class Scope {
     }
   }
   /* $watch(watchFn[, listenerFn, [valueBasedEquality]])
-  Adds a watcher object to the Scope.$$watchers array.
+  Adds a watcher object to the $$watchers array.
   Returns a destroyWatcher function, which can be called to
   remove the watcher from the array.
   
@@ -34,7 +33,7 @@ export default class Scope {
   
   [optional] listenerFn(newValue, oldValue, scope){}
   Is called during the first digest, and then
-  only if the latest value returned by watchFn is different
+  only if the latest watchFn value returned during digest is different
   to the previous time watchFn was run.
   
   [optional] valueBasedEquality: a boolean. If true, watchFn
@@ -56,6 +55,7 @@ export default class Scope {
       const index = this.$$watchers.indexOf(watcher);
       if (index >= 0) {
         this.$$watchers.splice(index, 1);
+        this.$$lastDirtyWatch = null;
       }
     };
     return destroyWatcher;
@@ -77,8 +77,6 @@ export default class Scope {
       try {
         newValue = watcher.watchFn(this);
         oldValue = watcher.last;
-        // if the watch fn return value is different to last time
-        // (ie the watcher is dirty), run the listener function.
         if (!Scope.areEqual(newValue, oldValue, watcher.valueBasedEquality)) {
           this.$$lastDirtyWatch = watcher;
           if (watcher.valueBasedEquality) {
