@@ -75,40 +75,40 @@ export default class Scope {
 
     _.forEachRight(this.$$watchers, (watcher) => {
       try {
-        newValue = watcher.watchFn(this);
-        oldValue = watcher.last;
-        if (!Scope.areEqual(newValue, oldValue, watcher.valueBasedEquality)) {
-          this.$$lastDirtyWatch = watcher;
-          if (watcher.valueBasedEquality) {
-            watcher.last = _.cloneDeep(newValue);
-          } else {
-            watcher.last = newValue;
-          }
-          // The first time the listenerFn runs there is no
-          // old value, so it receives newValue twice.
-          watcher.listenerFn(
-            newValue,
-            oldValue === initWatchVal ? newValue : oldValue,
-            this
-          );
-          dirty = true;
+        if (watcher) {
+          newValue = watcher.watchFn(this);
+          oldValue = watcher.last;
+          if (!Scope.areEqual(newValue, oldValue, watcher.valueBasedEquality)) {
+            this.$$lastDirtyWatch = watcher;
+            if (watcher.valueBasedEquality) {
+              watcher.last = _.cloneDeep(newValue);
+            } else {
+              watcher.last = newValue;
+            }
+            // The first time the listenerFn runs there is no
+            // old value, so it receives newValue twice.
+            watcher.listenerFn(
+              newValue,
+              oldValue === initWatchVal ? newValue : oldValue,
+              this
+            );
+            dirty = true;
 
-          /*
+            /*
           Optimization to skip unecessary digestion.
           If a watcher is clean AND is the most recent dirty watcher,
           there cannot be any other dirty watchers. Abort early. */
-        } else if (this.$$lastDirtyWatch === watcher) {
-          return false;
+          } else if (this.$$lastDirtyWatch === watcher) {
+            return false;
+          }
         }
         // todo: improve error logging
       } catch (e) {
         console.error(
           `Error during scope digest.
-        error: ${e}`
+        ${e}`
         );
       }
-      // continue iterating over the watchers
-      return true;
     });
 
     // $digest will loop this function until dirty returns false,

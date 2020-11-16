@@ -170,7 +170,7 @@ describe("Scope", () => {
       expect(watchExecutions).toBe(301);
     });
     it("does not end digest before watchers added mid-digest are run", () => {
-      scope.aValue = "abc";
+      scope.aValue = "a";
       scope.counter = 0; // incremented when the inner watch is digested.
 
       scope.$watch(
@@ -237,12 +237,12 @@ describe("Scope", () => {
       expect(scope.counter).toBe(1);
     });
     it("catches exceptions in watch function and continues", () => {
-      scope.aValue = "abc";
+      scope.aValue = "a";
       scope.counter = 0;
 
       scope.$watch(
         (scope) => {
-          throw new Error(); // digest should not fail despite Error
+          throw new Error("This error should be caught"); // digest should not fail despite Error
         },
         (newValue, oldValue, scope) => {}
       );
@@ -259,7 +259,7 @@ describe("Scope", () => {
       expect(scope.counter).toBe(1);
     });
     it("catches exceptions in listener function and continues", () => {
-      scope.aValue = "abc";
+      scope.aValue = "a";
       scope.counter = 0;
 
       scope.$watch(
@@ -284,7 +284,7 @@ describe("Scope", () => {
       expect(scope.counter).toBe(1);
     });
     it("allows destroying a $watch with a removal function", () => {
-      scope.aValue = "abc";
+      scope.aValue = "a";
       scope.counter = 0;
 
       const destroyWatch = scope.$watch(
@@ -310,7 +310,7 @@ describe("Scope", () => {
       expect(scope.counter).toBe(2);
     });
     it("allows destroying a $watch during digest", () => {
-      scope.aValue = "abc";
+      scope.aValue = "a";
       let watchCalls = [];
 
       scope.$watch((scope) => {
@@ -338,7 +338,7 @@ describe("Scope", () => {
       ]);
     });
     it("allows a watch to destroy another watch during digest", () => {
-      scope.aValue = "abc";
+      scope.aValue = "a";
       scope.counter = 0;
 
       scope.$watch(
@@ -362,6 +362,36 @@ describe("Scope", () => {
 
       scope.$digest();
       expect(scope.counter).toBe(1);
+    });
+    it("allows destroying several watchers during digest", () => {
+      scope.aValue = "a";
+      scope.counter = 0;
+
+      scope.$watch((scope) => {
+        destroyWatch2();
+        destroyWatch3();
+      });
+
+      var destroyWatch2 = scope.$watch((scope) => {
+        (scope) => {
+          return scope.aValue;
+        },
+          (newValue, oldValue, scope) => {
+            scope.counter++;
+          };
+      });
+
+      var destroyWatch3 = scope.$watch(
+        (scope) => {
+          return scope.aValue;
+        },
+        (newValue, oldValue, scope) => {
+          scope.counter++;
+        }
+      );
+
+      scope.$digest();
+      expect(scope.counter).toBe(0);
     });
   });
 });
